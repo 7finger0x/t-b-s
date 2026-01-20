@@ -15,6 +15,8 @@ const config = createConfig({
     },
 });
 
+import { FarcasterManifestProvider } from '@/providers/FarcasterProvider';
+
 export function Providers({ children }: { children: ReactNode }) {
     const [queryClient] = useState(() => new QueryClient());
 
@@ -25,7 +27,9 @@ export function Providers({ children }: { children: ReactNode }) {
                     apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
                     chain={base}
                 >
-                    {children}
+                    <FarcasterManifestProvider>
+                        {children}
+                    </FarcasterManifestProvider>
                 </OnchainKitProvider>
             </QueryClientProvider>
         </WagmiProvider>

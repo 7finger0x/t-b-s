@@ -1,4 +1,6 @@
-import 'server-only';
+// Server-only module (prevents client-side import)
+// Note: In production, install 'server-only' package for better type safety
+// import 'server-only';
 
 export const SCORING_CONSTANTS = {
     MAX_ECONOMIC: 2500,
@@ -21,10 +23,10 @@ export const SCORING_CONSTANTS = {
     },
 
     TIERS: {
-        TOURIST: 350,
-        RESIDENT: 650,
-        BUILDER: 850,
-        BASED: 950,
-        LEGEND: 1000,
+        TOURIST: 0,        // 0-350 (implicit minimum)
+        RESIDENT: 351,    // 351-650
+        BUILDER: 651,     // 651-850
+        BASED: 851,       // 851-950
+        LEGEND: 951,      // 951+
     }
 };

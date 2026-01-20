@@ -3,10 +3,17 @@ import { prisma } from '@/lib/prisma';
 export const dynamic = 'force-dynamic'; // Always fetch fresh data
 
 export default async function LeaderboardPage() {
-    const users = await prisma.user.findMany({
-        orderBy: { totalScore: 'desc' },
-        take: 100,
-    });
+    let users;
+    try {
+        users = await prisma.user.findMany({
+            orderBy: { totalScore: 'desc' },
+            take: 100,
+        });
+    } catch (error) {
+        console.error('Failed to fetch leaderboard:', error);
+        // Graceful degradation: return empty array instead of crashing
+        users = [];
+    }
 
     return (
         <div className="max-w-4xl mx-auto p-8 text-white">
