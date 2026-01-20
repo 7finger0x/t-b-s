@@ -7,7 +7,7 @@ const domain = {
     name: 'The Base Standard',
     version: '1',
     chainId: 8453, // Base Mainnet
-    verifyingContract: '0xYourDeployedContractAddress' as `0x${string}`, // UPDATE THIS AFTER DEPLOY
+    verifyingContract: (process.env.NEXT_PUBLIC_REGISTRY_ADDRESS || '0x0000000000000000000000000000000000000000') as `0x${string}`,
 } as const;
 
 // Define the exact Type structure from your Smart Contract
