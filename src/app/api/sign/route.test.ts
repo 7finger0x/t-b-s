@@ -13,11 +13,18 @@ vi.mock('@/lib/prisma', () => ({
     },
 }));
 
+// Mock viem public client
+const { mockReadContract } = vi.hoisted(() => {
+    return { mockReadContract: vi.fn() };
+});
+
 vi.mock('viem', async () => {
     const actual = await vi.importActual('viem');
     return {
         ...actual,
-        createPublicClient: vi.fn(),
+        createPublicClient: vi.fn(() => ({
+            readContract: mockReadContract,
+        })),
         http: vi.fn(),
     };
 });
@@ -42,7 +49,7 @@ describe('POST /api/sign', () => {
 
         const response = await POST(req);
         expect(response.status).toBe(400);
-        
+
         const data = await response.json();
         expect(data.error).toBe('Invalid request');
     });
@@ -62,14 +69,14 @@ describe('POST /api/sign', () => {
 
         const req = new NextRequest('http://localhost/api/sign', {
             method: 'POST',
-            body: JSON.stringify({ 
-                address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5' 
+            body: JSON.stringify({
+                address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5'
             }),
         });
 
         const response = await POST(req);
         expect(response.status).toBe(404);
-        
+
         const data = await response.json();
         expect(data.error).toBe('User not found');
     });
@@ -90,10 +97,7 @@ describe('POST /api/sign', () => {
         vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
 
         // Mock contract read
-        const mockReadContract = vi.fn().mockResolvedValue(BigInt(0));
-        vi.mocked(createPublicClient).mockReturnValue({
-            readContract: mockReadContract,
-        } as any);
+        mockReadContract.mockResolvedValue(BigInt(0));
 
         // Mock signature generation
         const { generateScoreSignature } = await import('@/lib/scoring/signer');
@@ -105,14 +109,14 @@ describe('POST /api/sign', () => {
 
         const req = new NextRequest('http://localhost/api/sign', {
             method: 'POST',
-            body: JSON.stringify({ 
-                address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5' 
+            body: JSON.stringify({
+                address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5'
             }),
         });
 
         const response = await POST(req);
         expect(response.status).toBe(200);
-        
+
         const data = await response.json();
         expect(data.score).toBe(865);
         expect(data.tier).toBe(3); // BASED
@@ -124,8 +128,8 @@ describe('POST /api/sign', () => {
 
         const req = new NextRequest('http://localhost/api/sign', {
             method: 'POST',
-            body: JSON.stringify({ 
-                address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5' 
+            body: JSON.stringify({
+                address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5'
             }),
         });
 
