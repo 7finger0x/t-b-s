@@ -1,0 +1,51 @@
+name: The Base Standard CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # 1. Frontend & Lint Check
+  frontend-check:
+    name: Frontend Test & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install Dependencies
+        run: npm ci
+        
+      - name: Type Check (TypeScript)
+        run: npx tsc --noEmit
+        
+      - name: Run Tests
+        run: npm test
+
+  # 2. Smart Contract Check
+  contract-check:
+    name: Foundry Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Install Solady
+        run: |
+          cd foundry
+          forge install vectorized/solady --no-commit
+
+      - name: Run Forge Tests
+        run: |
+          cd foundry
+          forge test -vv
