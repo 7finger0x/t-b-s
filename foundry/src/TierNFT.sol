@@ -35,4 +35,10 @@ contract TierNFT is ERC1155, Ownable {
     function uri(uint256 id) public view override returns (string memory) {
         return string.concat("https://api.base-standard.xyz/metadata/", LibString.toString(id), ".json");
     }
+
+    function withdraw() external onlyOwner {
+        (bool success, ) = msg.sender.call{value: address(this).balance}("");
+        if (!success) revert("Transfer failed");
+    }
 }
+
