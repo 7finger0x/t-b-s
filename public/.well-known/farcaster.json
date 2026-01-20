@@ -1,0 +1,16 @@
+{
+    "accountAssociation": {
+        "header": "eyJmaWQiOjk5OTk5OSwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAifQ",
+        "payload": "eyJkb21haW4iOiJiYXNlLXN0YW5kYXJkLnh5eiJ9",
+        "signature": "MIGIAkIB..."
+    },
+    "frame": {
+        "version": "1",
+        "name": "Base Standard",
+        "iconUrl": "https://base-standard.xyz/icons/icon-512x512.png",
+        "homeUrl": "https://base-standard.xyz",
+        "splashImageUrl": "https://base-standard.xyz/splash.png",
+        "splashBackgroundColor": "#0052ff",
+        "webhookUrl": "https://base-standard.xyz/api/frame/webhook"
+    }
+}

@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  address         String   @unique
+  ensName         String?
+  
+  // -- The 3 Vectors --
+  scoreEconomic   Int      @default(0) // Vector E
+  scoreSocial     Int      @default(0) // Vector S
+  scoreTenure     Int      @default(0) // Vector T
+  
+  // -- Computed Totals --
+  totalScore      Int      @default(0)
+  tier            String   @default("TOURIST") // Using String for enum in SQLite as Enums are not fully supported or simpler to handle
+  
+  // -- Metadata --
+  sybilMultiplier Float    @default(1.0)
+  lastUpdated     DateTime @default(now())
+  
+  // -- Relations --
+  reputationLogs  ReputationLog[]
+  linkedWallets   WalletLink[]
+
+  @@index([totalScore(sort: Desc)]) // Fast Leaderboard
+  @@index([address])
+}
+
+model ReputationLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  vector      String   // "ECONOMIC", "SOCIAL", "TENURE"
+  change      Int      // +50, -10
+  reason      String   // "Zora Mint Streak", "Gas Burn Milestone"
+  timestamp   DateTime @default(now())
+}
+
+model WalletLink {
+  id        String   @id @default(cuid())
+  mainUserId String
+  user      User     @relation(fields: [mainUserId], references: [id])
+  address   String   @unique
+  signature String
+  timestamp DateTime @default(now())
+}
