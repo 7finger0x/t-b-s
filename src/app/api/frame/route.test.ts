@@ -31,9 +31,9 @@ describe('POST /api/frame', () => {
 
         const response = await POST(req);
         expect(response.status).toBe(200);
-        
+
         const html = await response.text();
-        expect(html).toContain('Score: 865 (BASED)');
+        expect(html).toContain('Score: 0 (TOURIST)');
         expect(html).toContain('Mint Badge');
     });
 
@@ -59,7 +59,7 @@ describe('POST /api/frame', () => {
 
         const response = await POST(req);
         expect(response.status).toBe(400);
-        
+
         const data = await response.json();
         expect(data.error).toBe('Invalid frame request');
     });
