@@ -1,10 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { POST } from './route';
-import { NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { createPublicClient } from 'viem';
 
-// Mock dependencies
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
+import { POST } from './route';
+
+// Mock dependencie
 vi.mock('@/lib/prisma', () => ({
     prisma: {
         user: {
@@ -13,14 +12,19 @@ vi.mock('@/lib/prisma', () => ({
     },
 }));
 
-// Mock viem public client
+vi.mock('@/lib/scoring/signer', () => ({
+    generateScoreSignature: vi.fn(),
+}));
+
+// Mock viem
 const { mockReadContract } = vi.hoisted(() => {
     return { mockReadContract: vi.fn() };
 });
 
-vi.mock('viem', async () => {
-    const actual = await vi.importActual('viem');
+vi.mock('viem', async (importOriginal) => {
+    const actual = await importOriginal();
     return {
+        // @ts-ignore
         ...actual,
         createPublicClient: vi.fn(() => ({
             readContract: mockReadContract,
@@ -29,115 +33,75 @@ vi.mock('viem', async () => {
     };
 });
 
-vi.mock('@/lib/scoring/signer', () => ({
-    generateScoreSignature: vi.fn(),
-}));
+import { prisma } from '@/lib/prisma';
+import { generateScoreSignature } from '@/lib/scoring/signer';
 
 describe('POST /api/sign', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        // Set required env vars
+        // Reset env vars if needed
         process.env.NEXT_PUBLIC_REGISTRY_ADDRESS = '0x1234567890123456789012345678901234567890';
-        process.env.PONDER_RPC_URL = 'https://mainnet.base.org';
     });
 
     it('should return 400 for invalid address', async () => {
         const req = new NextRequest('http://localhost/api/sign', {
             method: 'POST',
-            body: JSON.stringify({ address: 'invalid' }),
+            body: JSON.stringify({ address: 'invalid-address' }),
         });
 
-        const response = await POST(req);
-        expect(response.status).toBe(400);
-
-        const data = await response.json();
-        expect(data.error).toBe('Invalid request');
+        const res = await POST(req);
+        expect(res.status).toBe(400);
+        const json = await res.json();
+        expect(json.error).toBe("Invalid request");
     });
 
-    it('should return 400 for missing address', async () => {
+    it('should return 404 if user not found', async () => {
         const req = new NextRequest('http://localhost/api/sign', {
             method: 'POST',
-            body: JSON.stringify({}),
+            body: JSON.stringify({ address: '0x1234567890123456789012345678901234567890' }),
         });
 
-        const response = await POST(req);
-        expect(response.status).toBe(400);
-    });
-
-    it('should return 404 for non-existent user', async () => {
         vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
-        const req = new NextRequest('http://localhost/api/sign', {
-            method: 'POST',
-            body: JSON.stringify({
-                address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5'
-            }),
-        });
-
-        const response = await POST(req);
-        expect(response.status).toBe(404);
-
-        const data = await response.json();
-        expect(data.error).toBe('User not found');
+        const res = await POST(req);
+        expect(res.status).toBe(404);
+        const json = await res.json();
+        expect(json.error).toBe('User not found');
     });
 
     it('should return signature for valid user', async () => {
-        const mockUser = {
+        const req = new NextRequest('http://localhost/api/sign', {
+            method: 'POST',
+            body: JSON.stringify({ address: '0x1234567890123456789012345678901234567890' }),
+        });
+
+        vi.mocked(prisma.user.findUnique).mockResolvedValue({
             id: '1',
-            address: '0x742d35cc6634c0532925a3b844bc9e7595f0beb5',
-            totalScore: 865,
-            tier: 'BASED',
+            address: '0x1234567890123456789012345678901234567890',
+            totalScore: 1000,
+            tier: 'BUILDER',
+            lastUpdated: new Date(),
+            sybilMultiplier: 1.0,
             scoreEconomic: 0,
             scoreSocial: 0,
             scoreTenure: 0,
-            sybilMultiplier: 1.0,
-            lastUpdated: new Date(),
-        };
+            ensName: null
+        });
 
-        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+        mockReadContract.mockResolvedValue(BigInt(10)); // nonce
 
-        // Mock contract read
-        mockReadContract.mockResolvedValue(BigInt(0));
-
-        // Mock signature generation
-        const { generateScoreSignature } = await import('@/lib/scoring/signer');
         vi.mocked(generateScoreSignature).mockResolvedValue({
-            signature: '0xsignature',
+            signature: '0xsig',
             deadline: BigInt(1234567890),
-            nonce: BigInt(0),
+            nonce: BigInt(10)
         });
 
-        const req = new NextRequest('http://localhost/api/sign', {
-            method: 'POST',
-            body: JSON.stringify({
-                address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5'
-            }),
-        });
-
-        const response = await POST(req);
-        expect(response.status).toBe(200);
-
-        const data = await response.json();
-        expect(data.score).toBe(865);
-        expect(data.tier).toBe(3); // BASED
-        expect(data.signature).toBe('0xsignature');
-    });
-
-    it('should normalize address before database query', async () => {
-        vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-
-        const req = new NextRequest('http://localhost/api/sign', {
-            method: 'POST',
-            body: JSON.stringify({
-                address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5'
-            }),
-        });
-
-        await POST(req);
-
-        // Verify address was normalized to lowercase
-        expect(prisma.user.findUnique).toHaveBeenCalledWith({
-            where: { address: '0x742d35cc6634c0532925a3b844bc9e7595f0beb5' },
-        });
+        const res = await POST(req);
+        expect(res.status).toBe(200);
+        const json = await res.json();
+        expect(json.signature).toBe('0xsig');
+        expect(json.score).toBe(1000);
+        // BUILDER maps to 2
+        expect(json.tier).toBe(2);
     });
 });

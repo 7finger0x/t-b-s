@@ -41,3 +41,4 @@ ts-debug.log*
 # Ponder
 /ponder/.ponder/
 /ponder/generated/
+.vercel
