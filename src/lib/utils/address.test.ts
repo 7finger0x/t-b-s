@@ -4,21 +4,21 @@ import { normalizeAddress, isValidAddress } from './address';
 describe('normalizeAddress', () => {
     it('should normalize uppercase address to lowercase', () => {
         // Valid 42-character Ethereum address
-        const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5';
+        const address = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
         const result = normalizeAddress(address);
-        expect(result).toBe('0x742d35cc6634c0532925a3b844bc9e7595f0beb5');
+        expect(result).toBe('0xd8da6bf26964af9d7eed9e03e53415d37aa96045');
     });
 
     it('should keep lowercase address unchanged', () => {
-        const address = '0x742d35cc6634c0532925a3b844bc9e7595f0beb5';
+        const address = '0xd8da6bf26964af9d7eed9e03e53415d37aa96045';
         const result = normalizeAddress(address);
-        expect(result).toBe('0x742d35cc6634c0532925a3b844bc9e7595f0beb5');
+        expect(result).toBe('0xd8da6bf26964af9d7eed9e03e53415d37aa96045');
     });
 
     it('should normalize mixed case address', () => {
-        const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5';
+        const address = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
         const result = normalizeAddress(address);
-        expect(result).toBe('0x742d35cc6634c0532925a3b844bc9e7595f0beb5');
+        expect(result).toBe('0xd8da6bf26964af9d7eed9e03e53415d37aa96045');
     });
 
     it('should throw error for invalid address format', () => {
@@ -37,8 +37,8 @@ describe('normalizeAddress', () => {
 
 describe('isValidAddress', () => {
     it('should return true for valid addresses', () => {
-        expect(isValidAddress('0x742d35cc6634c0532925a3b844bc9e7595f0beb5')).toBe(true);
-        expect(isValidAddress('0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5')).toBe(true);
+        expect(isValidAddress('0xd8da6bf26964af9d7eed9e03e53415d37aa96045')).toBe(true);
+        expect(isValidAddress('0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045')).toBe(true);
     });
 
     it('should return false for invalid addresses', () => {
